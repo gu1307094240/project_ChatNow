@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>一对一聊天室</title>
+		<link rel="stylesheet" href="css/single.css" />
+		<script type="text/javascript" src="js/jquery-1.12.4.min.js" ></script>
+		<script type="text/javascript" src="js/single.js" ></script>
+	</head>
+	<body id="body">
+		<div style="float:left ;display: inline;">
+			<canvas id="clock" height="100px" width="100px"></canvas>
+		</div>
+		<div class="cover">
+			<a class="rightTop" href="javascript:history.go(-1)">返回</a>
+			<!--<a id="quit" class="rightTop">退出</a>-->
+			<a class="rightTop" href="javascript:changeLight()">灯光</a>
+			<a id="name" class="rightTop"></a>
+			<h1>一对一聊天室 </h1>
+			<div class="float" id="float"></div>
+			<div class="main">
+				<div class="leftside">
+					<div class="chatwindow" id="chatwindow"></div>
+					<div class="chatbar">
+						<div class="message_input">
+							<input type="text" id="message" placeholder="请输入发送信息"/>
+						</div>
+						<div id="send" onclick="sendMsg()"></div>
+					</div>
+				</div>
+				
+			</div>
+		</div>
+	</body>
+	<script type="text/javascript" src="js/clock.js" ></script>
+	<script type="text/javascript">
+	document.getElementById("name").innerHTML = sessionStorage.getItem("username");
+	//发送消息
+	var sendbtn = document.getElementById("send");
+	var username = sessionStorage.getItem("username");
+	var uname = sessionStorage.getItem("uname");
+	
+	function sendMsg(){
+	    var msg = document.getElementById("message").value;//发送的消息
+	    var time = new Date().getTime();//当前时间的时间戳 毫秒为单位
+	    
+	    $.ajax({
+	    	type:"post",
+	    	url:"server.php",
+	    	async:true,
+	    	data:{"type":"s_send","namefrom":username,"nameto":uname,"msg":msg,"time":time},
+	    	success:function(data){
+	    		console.log("message have sent successful");
+	    		//发送完成后，将input标签内容情况
+	    		document.getElementById("message").value = "";
+	    		console.log(data);
+	    	}
+	    });
+	}
+	
+	/*按下Enter键,执行发送方法*/
+		document.addEventListener("keydown",function(){
+			//1.获取事件
+			var e = window.event;
+			//2.判断事件的keyCode
+			if(e.keyCode == 13){
+				sendMsg();
+			}
+		});
+	
+	/*改变灯光*/
+		var back = document.getElementById("body");
+		function changeLight(){
+			if(back.style.backgroundImage == 'url("img/sun.jpg")' ){
+				back.style.backgroundImage = 'url(img/chatBack1.gif)';
+			}else{
+				back.style.backgroundImage = 'url(img/sun.jpg)';
+			}
+		}
+		/*拖动时钟*/
+		oDIV = document.getElementById("clock");
+		oDIV.onmousedown = function(e) { // 当鼠标点击下去的时候 
+			console.log("down");
+			var diffX = e.clientX - oDIV.offsetLeft; // 点击的位置距离浏览器最左边的位置(clientX) 再减去被点击元素距离最左边的位置(oDIV.offetLeft) 在引动的所点击的元素距离最左边的位置是不确定的 所以需要这个结果 
+			var diffY = e.clientY - oDIV.offsetTop; // 点击的位置距离浏览器顶部的位置(clientY) 再减去被点击元素距离顶部的位置(oDIV.offsetTop) 在引动的所点击的元素距离顶部的位置是不确定的 所以需要这个结果 
+			document.onmousemove = function(e) { // 当按下鼠标不放的时候 
+				var e = e || window.event;
+				console.log("move");
+				oDIV.style.top = e.clientY - diffY + "px";
+				oDIV.style.left = e.clientX - diffX + "px";
+
+			};
+			document.onmouseup = function() { // 当鼠标弹起的时候 
+				console.log("up");
+				document.onmousemove = null; // 清空鼠标按下鼠标不放的事件 
+				document.onmouseup = null; // 清空鼠标弹起事件 
+			}
+		};
+	</script>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<title>多人聊天室</title>
+		<link rel="stylesheet" type="text/css" href="css/main.css"/>
+		<script type="text/javascript" src="js/jquery-1.12.4.min.js"></script>
+		<script type="text/javascript" src="js/main.js"></script>
+	</head>
+
+	<body id="body">
+		<div style="float:left ;display: inline;">
+			<canvas id="clock" height="100px" width="100px"></canvas>
+		</div>
+		<div class="cover">
+			<a id="quit" class="rightTop" href="javascript:quit()">退出</a>
+			<!--<p id="quit" class="rightTop">退出</p>-->
+			<!--<p class="rightTop" onclick="changeLight()">灯光</p>-->
+			<a class="rightTop" href="javascript:changeLight()">灯光</a>
+			<a id="name" class="rightTop"></a>
+			<h1>多人聊天室</h1>
+			
+			<div class="main">
+				
+				<div class="leftside">
+					<div id="chatwindow"></div>
+					<div id="chatbar">
+						<div class="message_input">
+							<textarea id="message"></textarea>
+							<!--<input type="text" id="message" placeholder="信息" />-->
+						</div>
+						<div id="send" onclick="sendMsg()"></div>
+					</div>
+				</div>
+				<div class="rightside">
+					<div id="online">
+						线上人数：
+						<span id="people_count" >0</span>
+					</div>
+					<div id="member">房间成员：</div>
+					<div id="membership"></div>
+				</div>
+			</div>
+		</div>
+	</body>
+	<script type="text/javascript" src="js/clock.js" ></script>
+	<script>
+		document.getElementById("name").innerHTML = sessionStorage.getItem("username");
+		
+		var username = sessionStorage.getItem("username");
+		var time = new Date().getTime();
+
+		function sendMsg() {
+			/*
+			 * 1.获取要发送的信息,还要获取信息的发送者
+			 * 2.异步请求，将发送的数据写到数据库（msg.json）中
+			 * 3.清空输入框
+			 */
+			var message = document.getElementById("message").value;
+			$.ajax({
+				type: "post",
+				url: "server.php",
+				async: true,
+				data: {
+					"type": "sendMsg",
+					"msg": message,
+					"name": username,
+					"time": time
+				},
+				success: function(data) {
+//					console.log("message have sent successfully");
+//					console.log(data);
+					document.getElementById("message").value = ""; //清空输入框
+				}
+
+			});
+				
+		}
+		/*按下Enter键,执行发送方法*/
+		document.addEventListener("keydown",function(){
+			//1.获取事件
+			var e = window.event;
+			//2.判断事件的keyCode
+			if(e.keyCode == 13){
+				sendMsg();
+			}
+		});
+		//定时获取用户名单
+		setInterval(getUsers, 1000);
+
+		function getUsers() {
+			$.ajax({
+				type: "post",
+				url: "server.php",
+				async: true,
+				data: {
+					"type": "getUsers"
+				},
+				success: function(data) {
+					var data = JSON.parse(data);
+//					console.log(data);
+					var names = data["names"];
+					var count = data["count"];
+					var states = data["state"];
+					console.log(states);
+					//将names的个数，展示在people_count里
+					var peopleCount = document.getElementById("people_count");
+
+					peopleCount.innerHTML = count;
+					var membership = document.getElementById("membership");
+					//遍历数组，将每一个数组中的名字展示到页面上。
+					var str = "";
+					for (var i = 0; i < names.length; i++) {
+						/*//创建一个标签p
+						var p = document.createElement("p");
+						p.innerHTML = names[i];
+						//将标签p加到membership层
+						membership.appendChild(p);
+						*/
+//						str += "<p>" + names[i] + "</p>";;
+//						str +- "<hr />";
+						
+						var ss = "\'"+ names[i] +"\'";
+						/*当前登录用户为红,已登录用户为蓝,未登录为灰*/
+						var classname = "";
+						if(states[i] == "0"){
+                    		//未登录
+                    		classname = "'gray'";
+                    	}else{
+                    		//已登录
+                    		if(username == names[i]){
+                    			//当前登录用户
+                    			classname = "'red'";
+                    		}else{
+                    			//已登录用户
+                    			classname = "'blue'";
+                    		}
+                    	}	
+
+						
+                    	//<div id="names[i]" onclick="jump(names[i])"></div>
+                    	 //     <div id='names[i]' onclick="jump('names[i]')">
+//                  	str += "<div id=" +ss + " onclick=\"jump(" +ss+ ")\">"+names[i]+"</div>";
+                    	str += "<div id=" +ss + " class=" + classname + " onclick=\"jump(" +ss+ ")\">"+ '<img src="img/qq.png" />' +"用户昵称："+names[i]+"</div>";
+                   		str += "<hr />";
+
+					}
+					membership.innerHTML = str;
+					$(".gray").css("color","gray");
+                    $(".red").css("color","red");
+                    $(".blue").css("color","blue"); 
+
+				}
+			});
+		}
+		
+		/*跳转界面,实现一对一聊天*/
+		function jump(name){
+			//实现跳转后要明确与哪个用户聊天，因此 将被建立连接的用户存到sessionStorage中
+			sessionStorage.setItem("uname",name);
+			window.location.href = "single.html";
+		}
+		
+		/*
+	 	 * 退出
+		 */
+//		var quitbtn = document.getElementById("quit");
+	
+		function quit(){
+				$.ajax({
+					type:"post",
+					url:"server.php",
+					async:true,
+					data:{"type":"quit","name":username},
+					success:function(data){
+						localStorage.setItem("username","");
+						console.log("退出成功！")
+						window.location.href = "login.html";
+					}
+				});		
+			}
+		
+		/*改变灯光*/
+		var back = document.getElementById("body");
+		function changeLight(){
+			if(back.style.backgroundImage == 'url("img/sun.jpg")' ){
+				back.style.backgroundImage = 'url(img/chatBack1.gif)';
+			}else{
+				back.style.backgroundImage = 'url(img/sun.jpg)';
+			}
+		}
+		/*拖动时钟*/
+		oDIV = document.getElementById("clock");
+		oDIV.onmousedown = function(e) { // 当鼠标点击下去的时候 
+			console.log("down");
+			var diffX = e.clientX - oDIV.offsetLeft; // 点击的位置距离浏览器最左边的位置(clientX) 再减去被点击元素距离最左边的位置(oDIV.offetLeft) 在引动的所点击的元素距离最左边的位置是不确定的 所以需要这个结果 
+			var diffY = e.clientY - oDIV.offsetTop; // 点击的位置距离浏览器顶部的位置(clientY) 再减去被点击元素距离顶部的位置(oDIV.offsetTop) 在引动的所点击的元素距离顶部的位置是不确定的 所以需要这个结果 
+			document.onmousemove = function(e) { // 当按下鼠标不放的时候 
+				var e = e || window.event;
+				console.log("move");
+				oDIV.style.top = e.clientY - diffY + "px";
+				oDIV.style.left = e.clientX - diffX + "px";
+
+			};
+			document.onmouseup = function() { // 当鼠标弹起的时候 
+				console.log("up");
+				document.onmousemove = null; // 清空鼠标按下鼠标不放的事件 
+				document.onmouseup = null; // 清空鼠标弹起事件 
+			}
+		};
+	</script>
+
+</html>

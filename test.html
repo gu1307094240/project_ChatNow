@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script type="text/javascript" src="js/jquery-1.12.4.min.js" ></script>
+		<script type="text/javascript">
+			$.ajax({
+				type: "post",
+				url: "http://10.130.187.182/ssh/test",
+				async: true,
+				data: {
+					"type": "login",
+					"name": "name",
+					"pass": "pass"
+				},
+				success: function(data) {
+					console.log(data);
+				}
+			});
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>登录</title>
+		<script type="text/javascript" src="js/jquery-1.12.4.min.js"></script>
+	</head>
+
+	<style type="text/css">
+		@import url('http://cdn.gbtags.com/twitter-bootstrap/3.2.0/css/bootstrap.css');
+		body {
+			font-family: 'microsoft yahei', Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+			background-image: url(img/loginBack.gif);
+		}
+		
+		#rightTop {
+			text-align: right;
+			margin-top: 30px;
+			margin-right: 50px;
+		}
+		#div{
+			position: absolute;
+			top:110px;
+			left: 110px;
+		}
+	</style>
+
+	<body id="back">
+		<div id="div" style="float:left ;display: inline;">
+			<canvas id="clock" height="100px" width="100px"></canvas>
+			<p style="color: yellowgreen;">页面内时钟均可拖动</p>
+		</div>
+
+		<!--<div id=back style="display:none; POSITION:absolute; 
+			left:0; top:0; width:100%; height:100%; background-color:grey; 
+			filter:alpha(opacity=30)">
+		</div>-->
+
+		<!-- <div id=win style="display:none; 
+			POSITION:absolute; left:50%; top:50%; width:600px; 
+			height:400px; margin-left:-300px; margin-top:-200px; 
+			border:1px solid #888; background-color:#edf; text-align:center">
+			<a href="javascript:closeLogin();">关闭登录框</a>
+		</div> -->
+
+		<!--登录界面-->
+
+		<div id="loginModal" style="POSITION:absolute; left:50%; top:50%; width:600px; 
+			height:400px; margin-left:-300px; margin-top:-200px; ">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h1 class="text-center text-primary">登录</h1>
+					</div>
+					<div class="modal-body">
+						<span id="errMsg" style="display: none; "></span>
+						<form action="" class="form col-md-12 center-block">
+							<div class="form-group">
+								<input id="loginName" class="form-control input-lg" placeholder="用户名">
+							</div>
+							<div class="form-group">
+								<input id="loginPass" type="password" class="form-control input-lg" placeholder="登录密码">
+							</div>
+							<div class="form-group">
+								<input type="button" id="bt_login" class="btn btn-primary btn-lg btn-block" value="立刻登录">
+								<input type="button" onclick="openResgister()" class="btn btn-primary btn-lg btn-block" value="立刻注册">
+								<!--<input type="button" id="bt_login" name="submit" value="登录" />-->
+								<!--<span><a href="#">找回密码</a></span>
+								
+								<span><a href="javascript:openResgister();" class="pull-right">注册</a></span>-->
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer">
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</body>
+	<script type="text/javascript" src="js/clock.js"></script>
+
+	<script>
+		/*$("#loginName").onblur = function(){
+					if($("#loginName").val() == ""){
+						alert("aaa");
+					}
+				}*/
+
+		//		console.log(errMsg);
+
+		document.getElementById("bt_login").onclick = function() {
+			//			var errMsg = $("#errMsg");
+			//			console.log(errMsg);
+			//			window.location.href = "index.html";
+			var name = $("#loginName").val();
+			var pass = $("#loginPass").val();
+			if (name == "" || pass == "") {
+				alert("用户名和密码不能为空!");
+				return;
+			}
+
+			$.ajax({
+				type: "post",
+				url: "server.php",
+				async: true,
+				data: {
+					"type": "login",
+					"name": name,
+					"pass": pass
+				},
+				success: function(data) {
+					//					console.log(data);
+					if (data) {
+						//						alert(data);
+						//						console.log("success");
+						sessionStorage.setItem("username", name);
+
+						//						document.write("baocunchenggong");
+						window.location.href = "index.html";
+						//						return false;
+					} else {
+						//						alert("登录失败，请重新输入");
+						errMsg.innerHTML = "登录失败，请重新输入";
+						errMsg.style.color = "red";
+						errMsg.style.display = "block";
+					}
+				}
+			});
+		}
+
+		var errMsg = document.getElementById("errMsg");
+		document.getElementById("loginName").onblur = function() {
+			var username = $("#loginName").val();
+			//			console.log("done");
+			if (username == null || username == undefined || username == "") {
+				//				console.log("no"+username);
+				errMsg.innerHTML = "用户名不能为空";
+				errMsg.style.color = "red";
+				errMsg.style.display = "block";
+			} else {
+				//				console.log("yes");
+				//				console.log(username);
+				checkUserName(username);
+			}
+		}
+
+		function checkUserName(username) {
+			$.ajax({
+				type: "post",
+				url: "server.php",
+				async: true,
+				data: {
+					"type": "checkusername",
+					"username": username
+				},
+				success: function(data) {
+					var flag = JSON.parse(data);
+					if (flag == true) {
+						errMsg.innerHTML = "用户名检测通过，可继续填写";
+						errMsg.style.color = "limegreen";
+						errMsg.style.display = "block";
+					} else {
+						errMsg.innerHTML = "用户名检测失败，请重新填写";
+						errMsg.style.color = "red";
+						errMsg.style.display = "block";
+					}
+				}
+			});
+		}
+
+		/*注册按钮点击事件*/
+		function openResgister() {
+			window.location.href = "register.html";
+		}
+
+		/*
+		 * 拖动时钟
+		 * 1.top left 都是元素最左上角的位置
+		 * 2. 如果将div的元素top left改变的话
+	拖拽流程： 
+	1、第一步点击需要拖动的元素 
+	2、在点击下的元素被选中，进行move移动 
+	3、当鼠标弹起的时候，停止动作 
+	4、点击元素oDIV的时候，可用的是oDIV区域，而move和up则是全局区域，也就是整个文档通用，即应该用document 
+	*/
+		oDIV = document.getElementById("div");
+		oDIV.onmousedown = function(e) { // 当鼠标点击下去的时候 
+			console.log("down");
+			var diffX = e.clientX - oDIV.offsetLeft; // 点击的位置距离浏览器最左边的位置(clientX) 再减去被点击元素距离最左边的位置(oDIV.offetLeft) 在引动的所点击的元素距离最左边的位置是不确定的 所以需要这个结果 
+			var diffY = e.clientY - oDIV.offsetTop; // 点击的位置距离浏览器顶部的位置(clientY) 再减去被点击元素距离顶部的位置(oDIV.offsetTop) 在引动的所点击的元素距离顶部的位置是不确定的 所以需要这个结果 
+			document.onmousemove = function(e) { // 当按下鼠标不放的时候 
+				var e = e || window.event;
+				console.log("move");
+				oDIV.style.top = e.clientY - diffY + "px";
+				oDIV.style.left = e.clientX - diffX + "px";
+
+			};
+			document.onmouseup = function() { // 当鼠标弹起的时候 
+				console.log("up");
+				document.onmousemove = null; // 清空鼠标按下鼠标不放的事件 
+				document.onmouseup = null; // 清空鼠标弹起事件 
+			}
+		};
+	</script>
+
+</html>
